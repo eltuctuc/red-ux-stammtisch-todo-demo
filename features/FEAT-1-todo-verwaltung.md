@@ -1,7 +1,7 @@
 # FEAT-1: Todo-Verwaltung
 
 ## Status
-Aktueller Schritt: Dev
+Aktueller Schritt: Done
 
 ## Abhängigkeiten
 - Benötigt: Keine
@@ -354,3 +354,74 @@ Bereits vorhanden:
 - DB-Migrations müssen manuell via `drizzle-kit push` eingespielt werden (keine Auto-Migration)
 - Login-UI (PIN-Eingabe) ist noch nicht gebaut – das ist FEAT-8; bis dahin per API-Call testbar
 - `NUXT_AUTH_PIN`, `NUXT_SESSION_SECRET`, `NUXT_DATABASE_URL`, `NUXT_CRON_SECRET` müssen als Env-Variablen gesetzt werden
+
+---
+
+## 5. QA Ergebnisse
+*Ausgefüllt von: /qa-engineer — 2026-03-27*
+
+### Acceptance Criteria Status
+- [x] AC-1: Neues Todo mit Titel (Pflicht), optionaler Deadline, Komplexität (Default M), optionalen Unteraufgaben erstellen ✅
+- [x] AC-2: Ohne Titel lässt sich kein Todo speichern – Fehlermeldung erscheint ✅
+- [x] AC-3: Deadline in der Vergangenheit zeigt Hinweis, Speichern bleibt möglich ✅
+- [x] AC-4: Todo bearbeiten (alle Felder, inkl. Unteraufgaben hinzufügen/entfernen) ✅
+- [x] AC-5: Todo in Papierkorb verschieben (Soft Delete) ✅
+- [x] AC-6: Papierkorb-Ansicht via Filter-Toggle einsehbar ✅
+- [x] AC-7: Wiederherstellung aus Papierkorb innerhalb von 7 Tagen ✅
+- [x] AC-8: Dauerhaftes Löschen nach 7 Tagen (Cron-Job) ✅
+- [x] AC-9: Gesamte Erfassungsstrecke auf Smartphone mit Daumen bedienbar ✅
+
+### Security-Check
+- ✅ Alle API-Routen außer öffentliche Pfade durch Auth-Middleware geschützt
+- ✅ Cron-Route durch separaten `x-cron-secret`-Header gesichert (nicht durch Session-Cookie)
+- ✅ UUID-Validierung via Zod auf allen `[id]`-Routen verhindert Injection
+- ✅ Soft-Delete-Schutz: gelöschte Todos können nicht weiter manipuliert werden
+- ✅ Input-Validierung serverseitig (Zod) auf allen POST/PATCH-Routen
+- ⚠️ BUG-FEAT1-QA-007 (Low, offen): Timing-Angriff auf Session-Token-Vergleich – Risiko bei Single-User-App sehr gering, kein Fix vor Release nötig
+
+### A11y-Check
+- ✅ ARIA Radiogroup mit Roving Tabindex in KomplexitaetSelector (ArrowLeft/Right/Home/End)
+- ✅ Focus Trap in BottomSheet und UnsavedChangesDialog mit `previouslyFocused`-Rückgabe
+- ✅ `role="dialog"` und `aria-modal="true"` auf BottomSheet
+- ✅ `aria-live="polite"` auf Deadline-Warnung und Fehler-Meldungen
+- ✅ Touch-Targets ≥ 44px auf allen interaktiven Elementen
+- ✅ `aria-label` auf allen relevanten Buttons und Inputs
+- ⚠️ BUG-FEAT1-UX-010 (Low, offen): Empty-State Chevron zeigt falsche Richtung – rein visuell, kein Barrierefreiheitsproblem
+
+### Offene Bugs
+- BUG-FEAT1-QA-007 – Timing Attack auf Session-Token-Vergleich (Low)
+- BUG-FEAT1-UX-010 – Empty-State Chevron zeigt nach links statt unten (Low)
+
+### Behobene Bugs (22 von 24)
+- BUG-FEAT1-QA-001 – Cron-Route durch Auth-Middleware blockiert (Critical) ✅
+- BUG-FEAT1-QA-002 – Sheet schließt bei API-Fehler, Daten verloren (High) ✅
+- BUG-FEAT1-QA-003 – Gelöschte Todos manipulierbar (High) ✅
+- BUG-FEAT1-QA-004 – Fehlende UUID-Validierung (High) ✅
+- BUG-FEAT1-QA-005 – Ungefilterte Subtask-Query (Medium) ✅
+- BUG-FEAT1-QA-006 – Restore ohne Ablaufprüfung (Medium) ✅
+- BUG-FEAT1-QA-008 – Fehlende Zod-Validierung auf Subtask-Titeln (Medium) ✅
+- BUG-FEAT1-QA-009 – Fehlende Zod-Validierung auf Todo-Update (Medium) ✅
+- BUG-FEAT1-QA-010 – window.confirm() auf iOS PWA (Medium) ✅
+- BUG-FEAT1-UX-001 – Trash-Emoji statt SVG-Icon (Medium) ✅
+- BUG-FEAT1-UX-002 – Kalender-Emoji in Deadline-Chip (Medium) ✅
+- BUG-FEAT1-UX-003 – Subtask-Input ohne Fokus nach Hinzufügen (Medium) ✅
+- BUG-FEAT1-UX-004 – Papierkorb-Karten als klickbare Buttons (High) ✅
+- BUG-FEAT1-UX-005 – Toggle-Buttons im Header unter 44px (Medium) ✅
+- BUG-FEAT1-UX-006 – Subtask-Löschen-Button unter 44px (Medium) ✅
+- BUG-FEAT1-UX-007 – Fehlender focus-visible Stil auf Toggle-Buttons (Medium) ✅
+- BUG-FEAT1-UX-008 – Fehlende Focus Trap in Dialogen (High) ✅
+- BUG-FEAT1-UX-009 – Fehlende Tastaturnavigation in KomplexitaetSelector (Medium) ✅
+- BUG-FEAT1-UX-011 – Swipe-Close bei gescrolltem Panel (High) ✅
+- BUG-FEAT1-UX-012 – Fehlende aria-live auf Deadline-Warnung (Medium) ✅
+- BUG-FEAT1-UX-013 – Kein Hinweis auf Unteraufgaben-Löschung beim Todo-Löschen (Medium) ✅
+- BUG-FEAT1-UX-014 – Irreführender Subtask-Counter 0/N (Medium) ✅
+- BUG-FEAT1-UX-015 – Header überlappt mit Notch/Dynamic Island (Medium) ✅
+- BUG-FEAT1-UX-016 – Lösch-Bestätigung via window.confirm() (Medium) ✅
+
+### Summary
+- ✅ 9 Acceptance Criteria passed
+- ❌ 2 Bugs offen (0 Critical, 0 High, 0 Medium, 2 Low)
+- ✅ 22 Bugs behoben
+
+### Production-Ready
+✅ Ready – Keine Critical oder High Bugs offen. 2 Low-Priority-Bugs (Timing-Attack-Risiko minimal bei Single-User, Empty-State-Optik) bewusst zurückgestellt.

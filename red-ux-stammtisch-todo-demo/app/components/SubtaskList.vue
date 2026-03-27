@@ -95,8 +95,8 @@ function removeItem(idx: number) {
 }
 
 .subtask-remove {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: none;
   color: #9ca3af;

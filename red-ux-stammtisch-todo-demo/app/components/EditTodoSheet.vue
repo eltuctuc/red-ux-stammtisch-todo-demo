@@ -14,7 +14,7 @@
             aria-label="Todo löschen"
             @click="handleDelete"
           >
-            🗑
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           </button>
         </div>
 
@@ -49,7 +49,7 @@
             :class="{ 'date-past': isDeadlinePast }"
             aria-label="Deadline"
           />
-          <span v-if="isDeadlinePast" class="hint-warn">Deadline liegt in der Vergangenheit</span>
+          <span v-if="isDeadlinePast" class="hint-warn" aria-live="polite">Deadline liegt in der Vergangenheit</span>
         </div>
 
         <div class="form-row">
@@ -79,6 +79,15 @@
     @confirm="forceClose"
     @cancel="showDiscardDialog = false"
   />
+
+  <UnsavedChangesDialog
+    v-model="showDeleteConfirmDialog"
+    :title="`Todo löschen?`"
+    :body="deleteConfirmBody"
+    confirm-label="Löschen"
+    @confirm="confirmDelete"
+    @cancel="showDeleteConfirmDialog = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -100,6 +109,15 @@ const deadline = ref('')
 const subtaskItems = ref<{ key: string; id?: string; title: string }[]>([])
 const titleError = ref(false)
 const showDiscardDialog = ref(false)
+const showDeleteConfirmDialog = ref(false)
+const pendingDeleteTodo = ref<typeof props.todo>(null)
+
+const deleteConfirmBody = computed(() => {
+  const count = pendingDeleteTodo.value?.subtasks.length ?? 0
+  return count > 0
+    ? `Dieses Todo hat ${count} Unteraufgabe${count > 1 ? 'n' : ''}. Alle werden mitgelöscht.`
+    : 'Möchtest du dieses Todo wirklich löschen?'
+})
 
 const isDeadlinePast = computed(() => {
   if (!deadline.value) return false
@@ -156,7 +174,7 @@ async function handleSave() {
     return
   }
 
-  await store.updateTodo(props.todo!.id, {
+  const success = await store.updateTodo(props.todo!.id, {
     title: title.value.trim(),
     complexity: complexity.value,
     deadline: deadline.value || null,
@@ -166,12 +184,20 @@ async function handleSave() {
     })).filter((s) => s.title),
   })
 
-  emit('update:modelValue', false)
+  if (success) emit('update:modelValue', false)
 }
 
-async function handleDelete() {
+function handleDelete() {
+  pendingDeleteTodo.value = props.todo
+  showDeleteConfirmDialog.value = true
+}
+
+async function confirmDelete() {
+  const todo = pendingDeleteTodo.value
+  if (!todo) return
+  showDeleteConfirmDialog.value = false
   emit('update:modelValue', false)
-  await store.deleteTodo(props.todo!.id)
+  await store.deleteTodo(todo.id)
 }
 </script>
 

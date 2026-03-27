@@ -1,17 +1,20 @@
 <template>
   <div
+    ref="containerRef"
     class="selector"
     role="radiogroup"
     :aria-label="label ?? 'Komplexität'"
   >
     <button
-      v-for="option in options"
+      v-for="(option, idx) in options"
       :key="option.value"
       type="button"
       role="radio"
       :aria-checked="modelValue === option.value"
+      :tabindex="modelValue === option.value ? 0 : -1"
       :class="['option', { active: modelValue === option.value }]"
       @click="emit('update:modelValue', option.value)"
+      @keydown="handleKeydown($event, idx)"
     >
       {{ option.label }}
     </button>
@@ -29,6 +32,23 @@ defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: Complexity]
 }>()
+
+const containerRef = ref<HTMLElement | null>(null)
+
+function handleKeydown(e: KeyboardEvent, idx: number) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
+  e.preventDefault()
+  let next = idx
+  if (e.key === 'ArrowRight') next = (idx + 1) % options.length
+  if (e.key === 'ArrowLeft') next = (idx - 1 + options.length) % options.length
+  if (e.key === 'Home') next = 0
+  if (e.key === 'End') next = options.length - 1
+  emit('update:modelValue', options[next]!.value)
+  nextTick(() => {
+    const buttons = containerRef.value?.querySelectorAll('button')
+    ;(buttons?.[next] as HTMLElement)?.focus()
+  })
+}
 
 const options: { value: Complexity; label: string }[] = [
   { value: 'XS', label: 'XS' },

@@ -35,6 +35,7 @@ const emit = defineEmits<{ 'update:isTrashView': [value: boolean] }>()
   background: #fff;
   border-bottom: 1px solid #f3f4f6;
   padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -64,8 +65,13 @@ const emit = defineEmits<{ 'update:isTrashView': [value: boolean] }>()
   font-size: 0.8rem;
   color: #6b7280;
   cursor: pointer;
-  min-height: 32px;
+  min-height: 44px;
   transition: all 0.15s ease;
+}
+
+.toggle-btn:focus-visible {
+  outline: 2px solid var(--color-primary, #f97316);
+  outline-offset: 2px;
 }
 
 .toggle-btn.active {

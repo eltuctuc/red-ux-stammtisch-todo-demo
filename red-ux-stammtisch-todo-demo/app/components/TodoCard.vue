@@ -1,39 +1,38 @@
 <template>
-  <button
-    type="button"
+  <component
+    :is="readonly ? 'div' : 'button'"
+    v-bind="readonly ? {} : { type: 'button' }"
     class="card"
-    :class="{ overdue: isOverdue }"
-    :aria-label="`Todo: ${todo.title}`"
-    @click="emit('click')"
+    :class="{ overdue: isOverdue, readonly }"
+    :aria-label="readonly ? undefined : `Todo: ${todo.title}`"
+    @click="readonly ? undefined : emit('click')"
   >
     <div class="card-main">
       <span class="card-title">{{ todo.title }}</span>
       <span v-if="todo.subtasks.length" class="card-subtask-count">
-        {{ completedSubtasks }}/{{ todo.subtasks.length }}
+        {{ todo.subtasks.length }} Teilaufgabe{{ todo.subtasks.length > 1 ? 'n' : '' }}
       </span>
     </div>
 
     <div class="card-meta">
       <span v-if="todo.deadline" class="meta-chip" :class="{ 'chip-overdue': isOverdue }">
-        📅 {{ formatDate(todo.deadline) }}
+        {{ formatDate(todo.deadline) }}
       </span>
       <span class="meta-chip">{{ todo.complexity }}</span>
     </div>
-  </button>
+  </component>
 </template>
 
 <script setup lang="ts">
 import type { Todo } from '~/stores/todos'
 
-const props = defineProps<{ todo: Todo }>()
+const props = defineProps<{ todo: Todo; readonly?: boolean }>()
 const emit = defineEmits<{ click: [] }>()
 
 const isOverdue = computed(() => {
   if (!props.todo.deadline) return false
   return new Date(props.todo.deadline) < new Date(new Date().toDateString())
 })
-
-const completedSubtasks = computed(() => 0) // Placeholder – status tracking in FEAT-3
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('de-DE', {
@@ -67,6 +66,15 @@ function formatDate(dateStr: string): string {
 .card.overdue {
   border-color: #fca5a5;
   background: #fff5f5;
+}
+
+.card.readonly {
+  cursor: default;
+}
+
+.card.readonly:active {
+  box-shadow: none;
+  border-color: #e5e7eb;
 }
 
 .card-main {

@@ -18,7 +18,7 @@
               :key="todo.id"
               class="trash-item"
             >
-              <TodoCard :todo="todo" @click="() => {}" />
+              <TodoCard :todo="todo" readonly />
               <button
                 type="button"
                 class="restore-btn"

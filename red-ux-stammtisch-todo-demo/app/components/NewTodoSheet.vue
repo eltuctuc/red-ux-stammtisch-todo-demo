@@ -37,7 +37,7 @@
           :class="{ 'date-past': isDeadlinePast }"
           aria-label="Deadline"
         />
-        <span v-if="isDeadlinePast" class="hint-warn">Deadline liegt in der Vergangenheit</span>
+        <span v-if="isDeadlinePast" class="hint-warn" aria-live="polite">Deadline liegt in der Vergangenheit</span>
       </div>
 
       <div class="form-row">
@@ -135,7 +135,7 @@ async function handleSave() {
     return
   }
 
-  await store.createTodo({
+  const success = await store.createTodo({
     title: title.value.trim(),
     complexity: complexity.value,
     deadline: deadline.value || null,
@@ -144,7 +144,7 @@ async function handleSave() {
       .filter(Boolean),
   })
 
-  emit('update:modelValue', false)
+  if (success) emit('update:modelValue', false)
 }
 </script>
 

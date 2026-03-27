@@ -11,6 +11,10 @@
           class="sheet-panel"
           :class="variant === 'full' ? 'sheet-full' : 'sheet-half'"
           :style="dragStyle"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="ariaLabel"
+          tabindex="-1"
           @touchstart.passive="onTouchStart"
           @touchmove="onTouchMove"
           @touchend="onTouchEnd"
@@ -28,8 +32,9 @@ const props = withDefaults(
   defineProps<{
     modelValue: boolean
     variant?: 'half' | 'full'
+    ariaLabel?: string
   }>(),
-  { variant: 'half' },
+  { variant: 'half', ariaLabel: 'Dialog' },
 )
 
 const emit = defineEmits<{
@@ -41,6 +46,10 @@ const panel = ref<HTMLElement | null>(null)
 const touchStartY = ref(0)
 const dragY = ref(0)
 const isDragging = ref(false)
+let previouslyFocused: HTMLElement | null = null
+
+const FOCUSABLE_SELECTORS =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 const dragStyle = computed(() =>
   isDragging.value && dragY.value > 0
@@ -48,14 +57,76 @@ const dragStyle = computed(() =>
     : {},
 )
 
+// ── Focus Trap ──────────────────────────────────────────────────────────────
+
+function getFocusableElements(): HTMLElement[] {
+  return Array.from(panel.value?.querySelectorAll(FOCUSABLE_SELECTORS) ?? []) as HTMLElement[]
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    emit('request-close')
+    return
+  }
+
+  if (e.key !== 'Tab') return
+  const focusable = getFocusableElements()
+  if (!focusable.length) return
+
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+
+  if (e.shiftKey) {
+    if (document.activeElement === first || document.activeElement === panel.value) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else {
+    if (document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+}
+
+watch(
+  () => props.modelValue,
+  async (open) => {
+    document.body.style.overflow = open ? 'hidden' : ''
+
+    if (open) {
+      previouslyFocused = document.activeElement as HTMLElement
+      document.addEventListener('keydown', handleKeydown)
+      await nextTick()
+      const focusable = getFocusableElements()
+      if (focusable.length) focusable[0].focus()
+      else panel.value?.focus()
+    } else {
+      document.removeEventListener('keydown', handleKeydown)
+      previouslyFocused?.focus()
+      previouslyFocused = null
+    }
+  },
+)
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  document.removeEventListener('keydown', handleKeydown)
+})
+
+// ── Swipe to close ───────────────────────────────────────────────────────────
+
 function onTouchStart(e: TouchEvent) {
   if (!e.touches[0]) return
+  // Only activate swipe-close when panel is scrolled to top
+  if (panel.value && panel.value.scrollTop > 0) return
   touchStartY.value = e.touches[0].clientY
   isDragging.value = true
   dragY.value = 0
 }
 
 function onTouchMove(e: TouchEvent) {
+  if (!isDragging.value) return
   if (!e.touches[0]) return
   const delta = e.touches[0].clientY - touchStartY.value
   if (delta > 0) {
@@ -65,6 +136,7 @@ function onTouchMove(e: TouchEvent) {
 }
 
 function onTouchEnd() {
+  if (!isDragging.value) return
   isDragging.value = false
   if (dragY.value > 80) {
     dragY.value = 0
@@ -77,17 +149,6 @@ function onTouchEnd() {
 function handleBackdropClick() {
   emit('request-close')
 }
-
-watch(
-  () => props.modelValue,
-  (open) => {
-    document.body.style.overflow = open ? 'hidden' : ''
-  },
-)
-
-onUnmounted(() => {
-  document.body.style.overflow = ''
-})
 </script>
 
 <style scoped>
@@ -109,6 +170,7 @@ onUnmounted(() => {
   overflow-y: auto;
   overscroll-behavior: contain;
   transition: transform 0.25s ease;
+  outline: none;
 }
 
 .sheet-half {

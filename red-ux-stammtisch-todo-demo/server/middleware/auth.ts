@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto'
 
-const PUBLIC_PATHS = ['/api/auth/login', '/api/auth/logout']
+const PUBLIC_PATHS = ['/api/auth/login', '/api/auth/logout', '/api/cron/cleanup-trash']
 
 export default defineEventHandler(async (event) => {
   const path = event.path

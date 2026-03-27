@@ -1,6 +1,6 @@
 import { useDb } from '../../db'
 import { todos, subtasks } from '../../db/schema'
-import { isNull, isNotNull } from 'drizzle-orm'
+import { isNull, isNotNull, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -24,7 +24,10 @@ export default defineEventHandler(async (event) => {
     ? todoRows.filter((t) => t.deletedAt! > sevenDaysAgo)
     : todoRows
 
-  const subtaskRows = await db.select().from(subtasks)
+  const todoIds = filtered.map((t) => t.id)
+  const subtaskRows = todoIds.length
+    ? await db.select().from(subtasks).where(inArray(subtasks.todoId, todoIds))
+    : []
 
   return filtered.map((todo) => ({
     ...todo,

@@ -58,7 +58,7 @@ export const useTodosStore = defineStore('todos', () => {
     }
   }
 
-  async function createTodo(payload: CreateTodoPayload) {
+  async function createTodo(payload: CreateTodoPayload): Promise<boolean> {
     const optimisticId = crypto.randomUUID()
     const optimistic: Todo = {
       id: optimisticId,
@@ -86,17 +86,19 @@ export const useTodosStore = defineStore('todos', () => {
       const idx = todos.value.findIndex((t) => t.id === optimisticId)
       if (idx !== -1) todos.value[idx] = created
       toast.success('Todo erstellt')
+      return true
     } catch {
       todos.value = todos.value.filter((t) => t.id !== optimisticId)
       toast.error('Fehler beim Erstellen', {
         action: { label: 'Erneut versuchen', onClick: () => createTodo(payload) },
       })
+      return false
     }
   }
 
-  async function updateTodo(id: string, payload: UpdateTodoPayload) {
+  async function updateTodo(id: string, payload: UpdateTodoPayload): Promise<boolean> {
     const original = todos.value.find((t) => t.id === id)
-    if (!original) return
+    if (!original) return false
 
     const optimistic: Todo = {
       ...original,
@@ -122,11 +124,13 @@ export const useTodosStore = defineStore('todos', () => {
       })
       if (idx !== -1) todos.value[idx] = updated
       toast.success('Todo gespeichert')
+      return true
     } catch {
       if (idx !== -1) todos.value[idx] = original
       toast.error('Fehler beim Speichern', {
         action: { label: 'Erneut versuchen', onClick: () => updateTodo(id, payload) },
       })
+      return false
     }
   }
 

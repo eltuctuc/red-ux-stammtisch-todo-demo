@@ -1,16 +1,23 @@
 <template>
   <Teleport to="body">
     <Transition name="dialog">
-      <div v-if="modelValue" class="dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
-        <div class="dialog-panel">
-          <h2 id="dialog-title" class="dialog-title">Änderungen verwerfen?</h2>
-          <p class="dialog-body">Deine Änderungen gehen verloren.</p>
+      <div
+        v-if="modelValue"
+        class="dialog-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-title"
+        @click.self="emit('cancel')"
+      >
+        <div ref="panel" class="dialog-panel" tabindex="-1">
+          <h2 id="dialog-title" class="dialog-title">{{ title ?? 'Änderungen verwerfen?' }}</h2>
+          <p class="dialog-body">{{ body ?? 'Deine Änderungen gehen verloren.' }}</p>
           <div class="dialog-actions">
-            <button type="button" class="btn btn-ghost" @click="emit('cancel')">
-              Weiter bearbeiten
+            <button ref="cancelBtn" type="button" class="btn btn-ghost" @click="emit('cancel')">
+              Abbrechen
             </button>
             <button type="button" class="btn btn-danger" @click="emit('confirm')">
-              Verwerfen
+              {{ confirmLabel ?? 'Verwerfen' }}
             </button>
           </div>
         </div>
@@ -20,8 +27,62 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ modelValue: boolean }>()
+defineProps<{
+  modelValue: boolean
+  title?: string
+  body?: string
+  confirmLabel?: string
+}>()
 const emit = defineEmits<{ confirm: []; cancel: [] }>()
+
+const panel = ref<HTMLElement | null>(null)
+const cancelBtn = ref<HTMLElement | null>(null)
+let previouslyFocused: HTMLElement | null = null
+
+const FOCUSABLE_SELECTORS =
+  'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    emit('cancel')
+    return
+  }
+  if (e.key !== 'Tab') return
+
+  const focusable = Array.from(
+    panel.value?.querySelectorAll(FOCUSABLE_SELECTORS) ?? [],
+  ) as HTMLElement[]
+  if (!focusable.length) return
+
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+
+  if (e.shiftKey) {
+    if (document.activeElement === first || document.activeElement === panel.value) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else {
+    if (document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+}
+
+// modelValue is always true when this component renders (v-if on parent)
+onMounted(async () => {
+  previouslyFocused = document.activeElement as HTMLElement
+  document.addEventListener('keydown', handleKeydown)
+  await nextTick()
+  cancelBtn.value?.focus()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+  previouslyFocused?.focus()
+  previouslyFocused = null
+})
 </script>
 
 <style scoped>
@@ -45,6 +106,7 @@ const emit = defineEmits<{ confirm: []; cancel: [] }>()
   display: flex;
   flex-direction: column;
   gap: 12px;
+  outline: none;
 }
 
 .dialog-title {

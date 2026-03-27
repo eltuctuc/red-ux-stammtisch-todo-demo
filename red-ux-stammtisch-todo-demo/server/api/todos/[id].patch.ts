@@ -1,7 +1,9 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { useDb } from '../../db'
 import { todos, subtasks } from '../../db/schema'
+
+const idSchema = z.string().uuid()
 
 const bodySchema = z.object({
   title: z.string().min(1).optional(),
@@ -18,7 +20,12 @@ const bodySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')!
+  const rawId = getRouterParam(event, 'id')
+  if (!idSchema.safeParse(rawId).success) {
+    throw createError({ statusCode: 400, statusMessage: 'Ungültige Todo-ID' })
+  }
+  const id = rawId!
+
   const body = await readValidatedBody(event, bodySchema.parse)
   const db = useDb()
 
@@ -30,7 +37,7 @@ export default defineEventHandler(async (event) => {
   const [todo] = await db
     .update(todos)
     .set(updates)
-    .where(eq(todos.id, id))
+    .where(and(eq(todos.id, id), isNull(todos.deletedAt)))
     .returning()
 
   if (!todo) throw createError({ statusCode: 404, statusMessage: 'Todo nicht gefunden' })
