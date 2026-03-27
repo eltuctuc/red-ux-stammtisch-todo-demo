@@ -24,7 +24,7 @@
 ## Git / GitHub
 - Git initialisiert: Ja
 - Git-Basis: Projekt-Root (ux-stammtisch/)
-- GitHub-Repository: wird angelegt
+- GitHub-Repository: https://github.com/eltuctuc/red-ux-stammtisch-todo-demo
 - Repository-Inhalt: Alles (Code + Projektdokumentation)
 
 ## Namenskonvention
