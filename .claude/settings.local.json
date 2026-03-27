@@ -22,11 +22,35 @@
       "Bash(printf '\\\\r')",
       "Bash(npm install:*)",
       "Bash(git branch:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(git push:*)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/workflow.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/sparring.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/user-research.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/requirements.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/ia-ux.md .claude/commands/)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//Users/enricoreinsdorf/Projekte/ux-stammtisch/**)",
+      "Bash(done)",
+      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch ls-files red-ux-stammtisch-todo-demo/app/components/)",
+      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch ls-files red-ux-stammtisch-todo-demo/server/api/)",
+      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch ls-files red-ux-stammtisch-todo-demo/server/db/)",
+      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch log --oneline -10)",
+      "Bash(npx nuxt:*)",
+      "Bash(node_modules/.bin/vue-tsc --noEmit)",
+      "Bash(npm run:*)",
+      "Bash(/Users/enricoreinsdorf/Projekte/ux-stammtisch/features/FEAT-1-todo-verwaltung.md:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch log --oneline -5)"
     ],
     "additionalDirectories": [
       "/Users/enricoreinsdorf/Projekte/ux-stammtisch/research",
-      "/Users/enricoreinsdorf/Projekte/ux-stammtisch/red-ux-stammtisch-todo-demo"
+      "/Users/enricoreinsdorf/Projekte/ux-stammtisch/red-ux-stammtisch-todo-demo",
+      "/Users/enricoreinsdorf/Projekte/ux-stammtisch/.claude/commands"
     ]
   },
   "disabledMcpjsonServers": [

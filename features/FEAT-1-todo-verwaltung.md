@@ -1,7 +1,7 @@
 # FEAT-1: Todo-Verwaltung
 
 ## Status
-Aktueller Schritt: Tech
+Aktueller Schritt: Dev
 
 ## Abhängigkeiten
 - Benötigt: Keine
@@ -176,41 +176,41 @@ EditTodoSheet (Full-Sheet)
 ---
 
 ## 3. Technisches Design
-*Ausgefüllt von: /solution-architect — 2026-03-27*
+*Ausgefüllt von: /solution-architect — 2026-03-27 (korrigiert: falscher React/Next.js-Stack ersetzt durch Nuxt.js/Vue 3)*
 
 ### Component-Struktur
 
 ```
-TodoList (Hauptscreen – app/page.tsx)
-├── StickyHeader
+app/pages/index.vue  (Hauptscreen – Todo-Liste)
+├── StickyHeader.vue
 │   ├── AppTitle
 │   └── FilterToggle (Aktiv | Papierkorb)
-├── TodoListContent
-│   ├── TodoCard (wiederholt)
+├── TodoListContent.vue
+│   ├── TodoCard.vue (wiederholt)
 │   │   ├── TodoTitle
 │   │   └── MetaRow (Deadline • Komplexität)
-│   └── EmptyState
-└── FAB
+│   └── EmptyState.vue
+└── FAB.vue
 
-NewTodoSheet (Bottom Sheet)
+NewTodoSheet.vue (Bottom Sheet – custom via <Teleport> + <Transition>)
 ├── SheetHandle
 ├── TitelInput (Autofocus)
 ├── DeadlinePicker
-├── KomplexitätSelector (Segment-Control XS–XL)
-├── SubtaskList (expandierbar)
+├── KomplexitätSelector.vue (Segment-Control XS–XL)
+├── SubtaskList.vue (expandierbar)
 │   └── SubtaskInput (wiederholt)
 └── SaveButton
 
-EditTodoSheet (Full-Sheet)
+EditTodoSheet.vue (Full-Sheet – gleiche Basis wie NewTodoSheet)
 ├── SheetHandle
 ├── DeleteButton (oben rechts, destruktiv)
 ├── TitelInput
 ├── DeadlinePicker
-├── KomplexitätSelector
-├── SubtaskList
+├── KomplexitätSelector.vue (wiederverwendet)
+├── SubtaskList.vue (wiederverwendet)
 └── SaveButton
 
-UnsavedChangesDialog (Modal)
+UnsavedChangesDialog.vue (Modal)
 └── "Änderungen verwerfen?" mit Confirm / Abbrechen
 ```
 
@@ -220,7 +220,6 @@ Keine bestehenden Komponenten zum Wiederverwenden (Greenfield).
 
 **Tabelle: todos**
 - `id` – eindeutiger Bezeichner (UUID)
-- `user_id` – Verweis auf den authentifizierten User
 - `title` – Pflichtfeld, nicht leer
 - `complexity` – Enum: XS / S / M / L / XL; Default: M
 - `deadline` – optionales Datum (ohne Uhrzeit)
@@ -234,55 +233,124 @@ Keine bestehenden Komponenten zum Wiederverwenden (Greenfield).
 - `title` – Pflichtfeld
 - `created_at`
 
-Gespeichert in: PostgreSQL-Datenbank (Neon)
+Gespeichert in: PostgreSQL-Datenbank (Neon) via Drizzle ORM.
 
-**Cleanup:** Ein Cron-Job (Vercel Cron) löscht täglich alle Einträge, bei denen `deleted_at` älter als 7 Tage ist – inklusive zugehöriger Subtasks.
+Kein `user_id` nötig – Single-User-App, kein Multi-Tenant-Konzept.
+
+**Cleanup:** Ein Vercel Cron Job (täglich 02:00 UTC) ruft die Nuxt Server Route `POST /api/cron/cleanup-trash` auf und löscht alle `todos`-Einträge, bei denen `deleted_at` älter als 7 Tage ist – inklusive zugehöriger Subtasks.
 
 ### API / Daten-Fluss
 
-- `GET  /api/todos`              → Alle aktiven Todos des Users (deleted_at IS NULL)
+Nuxt Server Routes (`server/api/`) als h3 Event Handler:
+
+- `GET  /api/todos`              → Alle aktiven Todos (deleted_at IS NULL)
 - `GET  /api/todos?bin=true`     → Todos im Papierkorb (deleted_at IS NOT NULL, ≤ 7 Tage)
 - `POST /api/todos`              → Neues Todo erstellen (inkl. optionaler Subtasks)
 - `PATCH /api/todos/[id]`        → Todo-Felder aktualisieren oder Subtasks synchronisieren
 - `DELETE /api/todos/[id]`       → Soft Delete (setzt deleted_at)
 - `POST /api/todos/[id]/restore` → Wiederherstellen (setzt deleted_at auf NULL)
+- `POST /api/cron/cleanup-trash` → Dauerhaftes Löschen abgelaufener Papierkorb-Einträge (nur Vercel Cron)
 
-Optimistic UI: Lokaler State wird sofort aktualisiert; bei API-Fehler wird rollback durchgeführt und ein Toast mit Retry-Option gezeigt.
+Optimistic UI via Pinia Store: Lokaler State wird sofort aktualisiert; bei API-Fehler wird Rollback durchgeführt und ein Toast mit Retry-Option angezeigt.
+
+Client-seitige API-Aufrufe laufen über Nuxts `$fetch` (auto-importiert).
 
 ### Tech-Entscheidungen
 
-- **Zustandsverwaltung:** Zustand (lightweight Zustand-Library für React) statt Redux oder Context – passend für diesen Scope, kein Boilerplate
-- **Bottom Sheets:** Vaul (von Emil Kowalski) – nativer Swipe-Support auf iOS/Android-Browsern, einfache Integration mit Next.js / Radix
-- **Komplexitäts-Segment:** Custom-Komponente mit `role="radiogroup"`, kein externer Picker nötig
-- **Deadline-Input:** Native HTML `<input type="date">` – kein Custom-Calendar, spart Abhängigkeit und ist system-nativ auf Mobile
-- **Toast / Undo:** Sonner (von Emil Kowalski) – Kompatibel mit Vaul, unterstützt Action-Buttons ("Rückgängig")
-- **Soft Delete Cleanup:** Vercel Cron (täglich 02:00 UTC) ruft `/api/cron/cleanup-trash` auf
+- **Zustandsverwaltung:** Pinia (`@pinia/nuxt`) – Vue-nativer Store, in Nuxt auto-integriert, kein Boilerplate
+- **Bottom Sheets:** Custom-Komponente mit Vue `<Teleport>` (rendert ins `<body>`) + `<Transition>` für Slide-up-Animation – kein externer Package nötig, idiomatic Vue, voller Swipe-Control über Vue-Events
+- **Komplexitäts-Segment:** Custom `KomplexitätSelector.vue` mit `role="radiogroup"` – keine externe Abhängigkeit
+- **Deadline-Input:** Native HTML `<input type="date">` – system-nativ auf Mobile, kein Custom-Calendar
+- **Toast / Undo:** `vue-sonner` (Vue-Port von Sonner) – unterstützt Action-Buttons ("Rückgängig"), minimal, tree-shakeable
+- **Validierung:** `zod` – framework-agnostisch, funktioniert server- und clientseitig
+- **Soft Delete Cleanup:** Vercel Cron (täglich 02:00 UTC) → `POST /api/cron/cleanup-trash`
 
 ### Security-Anforderungen
 
-- **Authentifizierung:** Jede API-Route prüft die Session via Neon Auth. Unauthentifizierte Requests → 401.
-- **Autorisierung:** Jede Datenbankabfrage filtert explizit nach `user_id = session.userId`. Ein User kann nie auf Todos eines anderen Users zugreifen – auch nicht durch direkte ID-Manipulation.
+- **Authentifizierung:** Nuxt Server Middleware (`server/middleware/auth.ts`) prüft bei jedem API-Request ein Session-Cookie gegen den PIN (Env-Variable `NUXT_AUTH_PIN`, 6-stellig). Kein Auth-Framework. Unauthentifizierte Requests → 401.
+- **Autorisierung:** Entfällt – Single-User-App, kein `user_id`-Konzept. Wer den PIN kennt, hat vollen Zugriff.
 - **Input-Validierung:** Server-seitig mit Zod auf allen POST/PATCH-Routen (Titel nicht leer, Deadline valides Datum, Complexity valider Enum-Wert). Client-seitig zusätzlich als UX-Feedback (Button disabled, rote Outline).
 - **OWASP-relevante Punkte:**
-  - XSS: React escapet Output automatisch; kein `dangerouslySetInnerHTML`
-  - SQL-Injection: Parametrisierte Queries via Neon-SDK / Drizzle ORM – kein Raw-SQL mit User-Input
-  - CSRF: Next.js API Routes sind via Same-Origin-Policy geschützt; zusätzlich prüft Neon Auth die Session-Cookie-Herkunft
+  - XSS: Vue escapet Template-Output automatisch; kein `v-html` mit User-Daten
+  - SQL-Injection: Parametrisierte Queries via Drizzle ORM – kein Raw-SQL mit User-Input
+  - CSRF: Nuxt Server Routes sind via Same-Origin-Policy geschützt; Session-Cookie mit `HttpOnly` + `SameSite=Strict`
+  - Cron-Route: Zusätzlich per `CRON_SECRET`-Header gesichert (Vercel-Standard)
 
 ### Dependencies
 
-- `vaul` – Bottom Sheet mit Swipe-to-close für Mobile
-- `sonner` – Toast-Notifications mit Action-Buttons (Undo)
-- `zustand` – Client-seitiger State für Todo-Liste und Optimistic Updates
+Neu zu installieren:
+- `@pinia/nuxt` – Pinia-Modul für Nuxt (State Management)
+- `vue-sonner` – Toast-Notifications mit Action-Buttons (Undo)
 - `zod` – Schema-Validierung für API-Input
-- `drizzle-orm` – Type-safe Query Builder für Neon PostgreSQL
+
+Bereits vorhanden:
+- `@neondatabase/serverless` – Neon PostgreSQL Client
+- `drizzle-orm` – Type-safe Query Builder
 
 ### Test-Setup
 
-- **Unit Tests:** KomplexitätSelector (Segment-Control-Logik), Soft-Delete-Logik (7-Tage-Berechnung), Zod-Schemas für API-Input-Validierung
-- **Integration Tests:** API-Routen (POST, PATCH, DELETE, restore) gegen eine Test-Datenbank; Cron-Cleanup-Route mit simulierten abgelaufenen Einträgen
+- **Unit Tests:** `KomplexitätSelector.vue` (Segment-Control-Logik), Soft-Delete-Berechnung (7-Tage-Grenze), Zod-Schemas für API-Input-Validierung
+- **Integration Tests:** Nuxt Server Routes (POST, PATCH, DELETE, restore) gegen eine Test-Datenbank; Cron-Cleanup-Route mit simulierten abgelaufenen Einträgen
 - **E2E Tests (Playwright):**
-  - Todo erstellen (Titel + Speichern → erscheint in Liste)
-  - Todo ohne Titel → Button bleibt disabled
+  - Todo erstellen (Titel eingeben + Speichern → erscheint in Liste)
+  - Todo ohne Titel → Speichern-Button bleibt disabled
   - Deadline in Vergangenheit → Hinweis erscheint
   - Todo löschen → Papierkorb-Ansicht zeigt es; Wiederherstellen → zurück in aktiver Liste
-  - Unsaved Changes Dialog beim Swipe-down mit Änderungen
+  - Unsaved Changes Dialog beim Swipe-down mit ungespeicherten Änderungen
+
+---
+
+## 4. Implementierung
+*Ausgefüllt von: /developer — 2026-03-27*
+
+### Implementierte Dateien
+
+**Konfiguration:**
+- `red-ux-stammtisch-todo-demo/nuxt.config.ts` – Pinia-Modul + Server-RuntimeConfig
+- `red-ux-stammtisch-todo-demo/drizzle.config.ts` – Drizzle-Kit Konfiguration für Migrationen
+
+**Datenbank:**
+- `red-ux-stammtisch-todo-demo/server/db/schema.ts` – Drizzle Schema: todos + subtasks + complexityEnum
+- `red-ux-stammtisch-todo-demo/server/db/index.ts` – Neon/Drizzle Datenbankverbindung
+
+**Auth (Infrastruktur):**
+- `red-ux-stammtisch-todo-demo/server/middleware/auth.ts` – PIN-Validierung via HMAC-Cookie
+- `red-ux-stammtisch-todo-demo/server/api/auth/login.post.ts` – Login-Endpoint (setzt HttpOnly-Cookie)
+- `red-ux-stammtisch-todo-demo/server/api/auth/logout.post.ts` – Logout-Endpoint
+
+**API Routes:**
+- `red-ux-stammtisch-todo-demo/server/api/todos/index.get.ts` – Todos laden (aktiv + Papierkorb)
+- `red-ux-stammtisch-todo-demo/server/api/todos/index.post.ts` – Todo erstellen
+- `red-ux-stammtisch-todo-demo/server/api/todos/[id].patch.ts` – Todo aktualisieren (inkl. Subtask-Sync)
+- `red-ux-stammtisch-todo-demo/server/api/todos/[id].delete.ts` – Soft Delete
+- `red-ux-stammtisch-todo-demo/server/api/todos/[id]/restore.post.ts` – Wiederherstellen aus Papierkorb
+- `red-ux-stammtisch-todo-demo/server/api/cron/cleanup-trash.post.ts` – Papierkorb nach 7 Tagen leeren
+
+**State:**
+- `red-ux-stammtisch-todo-demo/app/stores/todos.ts` – Pinia Store mit Optimistic UI + Toast-Feedback
+
+**Komponenten:**
+- `red-ux-stammtisch-todo-demo/app/components/BottomSheet.vue` – Base Sheet (Teleport + Transition, Swipe-to-close)
+- `red-ux-stammtisch-todo-demo/app/components/KomplexitaetSelector.vue` – Segment-Control XS–XL
+- `red-ux-stammtisch-todo-demo/app/components/SubtaskList.vue` – Subtask-Eingabe mit Add/Remove
+- `red-ux-stammtisch-todo-demo/app/components/TodoCard.vue` – Todo-Karte mit Overdue-Indikator
+- `red-ux-stammtisch-todo-demo/app/components/EmptyState.vue` – Leer-Zustand (aktiv + Papierkorb)
+- `red-ux-stammtisch-todo-demo/app/components/FAB.vue` – Floating Action Button
+- `red-ux-stammtisch-todo-demo/app/components/StickyHeader.vue` – Header + Filter-Toggle
+- `red-ux-stammtisch-todo-demo/app/components/NewTodoSheet.vue` – Half-Sheet: Todo erstellen
+- `red-ux-stammtisch-todo-demo/app/components/EditTodoSheet.vue` – Full-Sheet: Todo bearbeiten/löschen
+- `red-ux-stammtisch-todo-demo/app/components/UnsavedChangesDialog.vue` – Bestätigungsdialog bei Abbruch
+
+**Pages:**
+- `red-ux-stammtisch-todo-demo/app/pages/index.vue` – Hauptscreen: Todo-Liste
+- `red-ux-stammtisch-todo-demo/app/app.vue` – Root: NuxtPage + Sonner Toaster + Global CSS
+
+### Installierte Dependencies
+- `@pinia/nuxt@^0.10.1` – Vue State Management
+- `vue-sonner@^2.0.0` – Toast-Notifications
+- `zod@^3.24.2` – Server-seitige Input-Validierung
+
+### Offene Punkte / Tech-Debt
+- DB-Migrations müssen manuell via `drizzle-kit push` eingespielt werden (keine Auto-Migration)
+- Login-UI (PIN-Eingabe) ist noch nicht gebaut – das ist FEAT-8; bis dahin per API-Call testbar
+- `NUXT_AUTH_PIN`, `NUXT_SESSION_SECRET`, `NUXT_DATABASE_URL`, `NUXT_CRON_SECRET` müssen als Env-Variablen gesetzt werden

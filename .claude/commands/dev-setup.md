@@ -135,10 +135,21 @@ Danach noch fragen:
 AskUserQuestion({
   questions: [
     {
-      question: "Wie soll das Projekt-Verzeichnis / Repository heißen?",
-      header: "Projektname",
+      question: "Wie soll das GitHub-Repository heißen?",
+      header: "Repository-Name",
       options: [
-        { label: "Ich gebe den Namen im Chat an", description: "Kurz, keine Leerzeichen (z.B. mein-projekt)" }
+        { label: "Ich gebe den Namen im Chat an", description: "Kurz, keine Leerzeichen (z.B. mein-projekt) – nur für GitHub, nicht der Code-Ordner" }
+      ],
+      multiSelect: false
+    },
+    {
+      question: "In welchem Verzeichnis soll der Programm-Code liegen?",
+      header: "Code-Verzeichnis",
+      options: [
+        { label: "projekt/", description: "Standard – neuer Ordner im Framework-Root" },
+        { label: "src/", description: "Klassisch für viele Frameworks" },
+        { label: "app/", description: "Üblich bei Django, Laravel etc." },
+        { label: "Anderer Name", description: "Ich gebe den Namen im Chat an" }
       ],
       multiSelect: false
     },
@@ -182,59 +193,83 @@ AskUserQuestion({
 
 ## Phase 5: Projekt scaffolden
 
-Führe den passenden Befehl für den bestätigten Stack aus. `[name]` = bestätigter Projektname.
+`[codedir]` = bestätigtes Code-Verzeichnis (z.B. `projekt/`). Immer zuerst anlegen und dann mit `.` als Scaffold-Ziel arbeiten – so entsteht kein neuer Unterordner.
+
+```bash
+mkdir -p [codedir]
+cd [codedir]
+```
+
+> **Wichtig – interaktive Rückfragen im Terminal:**
+> - **"Initialize git repository?"** → immer **No** – Git richtet das Framework in Phase 6 ein
+> - **"Install dependencies?"** → **Yes**
+> - **"Project name?"** → den Repository-Namen eingeben (ist nur Metadaten, kein Ordner)
+> - Alle anderen Fragen: empfohlene Option wählen
 
 ### JavaScript / TypeScript Web
 
 **Next.js (React):**
 ```bash
-npx create-next-app@latest [name] --typescript --tailwind --app --src-dir --no-git
+mkdir -p [codedir] && cd [codedir]
+npx create-next-app@latest . --typescript --tailwind --app --src-dir --no-git
 ```
 
 **Nuxt:**
 ```bash
-npx nuxi@latest init [name] --no-git
+mkdir -p [codedir] && cd [codedir]
+# Falls "Initialize git?" erscheint: No wählen
+npx nuxi@latest init . --no-git
 ```
 
 **Vue + Vite:**
 ```bash
-npm create vue@latest [name]
-# Interaktiv: TypeScript Ja, Router Ja, Pinia Ja, Vitest Ja empfohlen
+mkdir -p [codedir] && cd [codedir]
+# Interaktiv: TypeScript Ja, Router Ja, Pinia Ja, Vitest Ja, Git Nein
+npm create vue@latest .
 ```
 
-**React + Vite (ohne Next.js):**
+**React + Vite:**
 ```bash
-npm create vite@latest [name] -- --template react-ts
+mkdir -p [codedir] && cd [codedir]
+npm create vite@latest . -- --template react-ts
 ```
 
 **SvelteKit:**
 ```bash
-npm create svelte@latest [name]
+mkdir -p [codedir] && cd [codedir]
+# Interaktiv – bei Git-Frage: Nein
+npm create svelte@latest .
 ```
 
 **Angular:**
 ```bash
-npx @angular/cli@latest new [name] --routing --style=scss --no-git
+mkdir -p [codedir] && cd [codedir]
+npx @angular/cli@latest new . --routing --style=scss --no-git
 ```
 
 **Remix:**
 ```bash
-npx create-remix@latest [name] --no-git
+mkdir -p [codedir] && cd [codedir]
+npx create-remix@latest . --no-git
 ```
 
 **Astro:**
 ```bash
-npm create astro@latest [name]
+mkdir -p [codedir] && cd [codedir]
+# Interaktiv – bei Git-Frage: Nein
+npm create astro@latest .
 ```
 
 **NestJS (Backend):**
 ```bash
-npx @nestjs/cli@latest new [name] --package-manager npm --skip-git
+mkdir -p [codedir] && cd [codedir]
+npx @nestjs/cli@latest new . --package-manager npm --skip-git
 ```
 
 **Express (Backend):**
 ```bash
-mkdir [name] && cd [name] && npm init -y
+mkdir -p [codedir] && cd [codedir]
+npm init -y
 npm install express
 npm install -D typescript @types/node @types/express ts-node nodemon
 ```
