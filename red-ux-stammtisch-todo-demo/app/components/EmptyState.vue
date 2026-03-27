@@ -1,7 +1,7 @@
 <template>
   <div class="empty">
     <p class="empty-text">{{ message }}</p>
-    <p v-if="!isTrash" class="empty-hint">Tap + um loszulegen ↓</p>
+    <p v-if="!isTrash" class="empty-hint">Tippe auf + um loszulegen ↘</p>
   </div>
 </template>
 

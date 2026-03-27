@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 
 const PUBLIC_PATHS = ['/api/auth/login', '/api/auth/logout', '/api/cron/cleanup-trash']
 
@@ -19,7 +19,13 @@ export default defineEventHandler(async (event) => {
     .update(config.authPin)
     .digest('hex')
 
-  if (sessionCookie !== expectedToken) {
+  const cookieBuf = Buffer.from(sessionCookie)
+  const expectedBuf = Buffer.from(expectedToken)
+  const valid =
+    cookieBuf.length === expectedBuf.length &&
+    timingSafeEqual(cookieBuf, expectedBuf)
+
+  if (!valid) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
 })
