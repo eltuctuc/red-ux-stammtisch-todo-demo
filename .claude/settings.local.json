@@ -45,7 +45,9 @@
       "Bash(npm run:*)",
       "Bash(/Users/enricoreinsdorf/Projekte/ux-stammtisch/features/FEAT-1-todo-verwaltung.md:*)",
       "Bash(npx drizzle-kit:*)",
-      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch log --oneline -5)"
+      "Bash(git -C /Users/enricoreinsdorf/Projekte/ux-stammtisch log --oneline -5)",
+      "Bash(do)",
+      "Bash(echo \"=== $f ===\")"
     ],
     "additionalDirectories": [
       "/Users/enricoreinsdorf/Projekte/ux-stammtisch/research",
