@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp ~/.claude/templates/product-framework/commands/00-workflow.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/01-sparring.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/02-user-research.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/03-requirements.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/04-ia-ux.md .claude/commands/)",
+      "Read(//Users/enricoreinsdorf/**)",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"productivity task manager todo mobile single-user prioritization minimal\" --design-system -p \"PrioTodo\" -f markdown)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/dev-setup.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/05-solution-architect.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/06-developer.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/commands/07-qa-engineer.md .claude/commands/)",
+      "Bash(cp ~/.claude/templates/product-framework/agents/frontend-developer.md .claude/agents/)",
+      "WebSearch",
+      "Bash(npx nuxi@latest init red-ux-stammtisch-todo-demo --no-git)",
+      "Bash(npx nuxi@latest init red-ux-stammtisch-todo-demo --template minimal --no-git)",
+      "Bash(npx nuxi@latest init red-ux-stammtisch-todo-demo --template minimal --no-git --packageManager npm)",
+      "Bash(printf '\\\\n')",
+      "Bash(npx nuxi@latest init red-ux-stammtisch-todo-demo --template minimal --packageManager npm)",
+      "Bash(printf '\\\\r')",
+      "Bash(npm install:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/enricoreinsdorf/Projekte/ux-stammtisch/research",
+      "/Users/enricoreinsdorf/Projekte/ux-stammtisch/red-ux-stammtisch-todo-demo"
+    ]
+  },
+  "disabledMcpjsonServers": [
+    "neon",
+    "supabase",
+    "vercel",
+    "notion",
+    "figma"
+  ]
+}
